@@ -31,11 +31,15 @@ warnings.filterwarnings("ignore")
 plt.style.use("dark_background")
 ACCENT = "#e040fb"
 
+# Répertoires de sortie pour les fichiers générés
 OUTPUT_DIR = Path("outputs")
 FIG_DIR = OUTPUT_DIR / "figures"
 MODEL_DIR = OUTPUT_DIR / "models"
+
+# Chemin par défaut du jeu de données
 DATA_PATH = Path("data/gdelt_benin_clean.csv")
 
+# Cible et colonnes utilisées pour l'entraînement
 TARGET = "sentiment"
 CATEGORICAL_FEATURES = ["event_category", "department", "Actor1Name"]
 NUMERIC_FEATURES = ["GoldsteinScale", "NumArticles", "NumMentions",
@@ -129,9 +133,14 @@ def build_sentiment(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def prepare_dataset(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
+    """Prépare X et y en appliquant les transformations de base."""
+    # Normalisation des colonnes pour s'assurer que les noms utilisés existent
     df = normalize_columns(df.copy())
+    # Création des variables temporelles à partir de la date
     df = enrich_datetime(df)
+    # Construction du label sentiment si nécessaire
     df = build_sentiment(df)
+    # Suppression des lignes incomplètes sur les features ou la cible
     df = df.dropna(subset=FEATURES + [TARGET])
     X = df[FEATURES].copy()
     y = df[TARGET].copy()
@@ -139,6 +148,7 @@ def prepare_dataset(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
 
 
 def build_preprocessor() -> ColumnTransformer:
+    """Retourne le transformateur de colonnes pour l'encodage des catégoriques."""
     return ColumnTransformer(
         transformers=[
             (
@@ -152,6 +162,11 @@ def build_preprocessor() -> ColumnTransformer:
 
 
 def build_classifier_pipeline() -> Pipeline:
+    """Construit le pipeline de classification complet.
+
+    Ce pipeline encode d'abord les colonnes catégorielles,
+    puis entraîne un RandomForestClassifier.
+    """
     preprocessor = build_preprocessor()
     return Pipeline(
         steps=[
@@ -172,6 +187,7 @@ def build_classifier_pipeline() -> Pipeline:
 
 
 def evaluate_classifier(model: Pipeline, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
+    """Évalue le modèle sur le jeu de test et affiche les métriques principales."""
     y_pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
     print(f"\n✅ Accuracy test : {accuracy*100:.1f}%")
@@ -220,8 +236,11 @@ def cross_validate_model(model: Pipeline, X: pd.DataFrame, y: pd.Series, cv: int
 
 
 def train_kmeans(X: pd.DataFrame, n_clusters: int) -> tuple[KMeans, StandardScaler, np.ndarray, ColumnTransformer]:
+    """Prépare et entraîne un modèle K-Means sur les données prétraitées."""
+    # Encodage des colonnes catégorielles avant la normalisation
     preprocessor = build_preprocessor()
     X_transformed = preprocessor.fit_transform(X)
+    # Normalisation nécessaire pour K-Means, qui dépend des distances
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X_transformed)
     km = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
@@ -230,6 +249,7 @@ def train_kmeans(X: pd.DataFrame, n_clusters: int) -> tuple[KMeans, StandardScal
 
 
 def plot_elbow(inertias: list[float], k_values: range, out_path: Path) -> None:
+    """Trace et enregistre la courbe d'inertie pour choisir le nombre de clusters."""
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.plot(list(k_values), inertias, marker="o", color=ACCENT, linewidth=2.5, markersize=8)
     ax.set_xlabel("Nombre de clusters K", color="white")
@@ -304,7 +324,10 @@ def main() -> None:
     parser.add_argument("--clusters", type=int, default=4, help="Nombre de clusters K pour K-Means.")
     args = parser.parse_args()
 
+    # Crée les dossiers de sortie si nécessaire
     ensure_output_directories()
+
+    # Chargement des données et préparation du jeu X/y
     df = load_data(Path(args.data_path), use_demo=args.use_demo)
     X, y = prepare_dataset(df)
 
@@ -330,9 +353,11 @@ def main() -> None:
     print(f"Scores : {[f'{s*100:.1f}%' for s in cv_scores]}")
 
     print("\n🔵 Entraînement du clustering K-Means...")
+    # Appliquer le prétraitement et entraîner K-Means sur les données transformées
     kmeans, scaler, X_scaled, kmeans_preprocessor = train_kmeans(X, n_clusters=args.clusters)
     print(f"Clusters entraînés : K = {args.clusters}")
 
+    # Calcul des inerties pour la méthode du coude
     inertias = []
     k_range = range(2, min(9, len(X)) if len(X) > 2 else 3)
     for k in k_range:
@@ -342,10 +367,12 @@ def main() -> None:
     plot_elbow(inertias, k_range, FIG_DIR / "ml_kmeans_elbow.png")
     plot_clusters(X_scaled, kmeans.labels_, args.clusters, FIG_DIR / "ml_kmeans_clusters.png")
 
+    # Affichage du profil de chaque cluster
     cluster_profile = profile_clusters(df, kmeans.labels_)
     print("\nProfil des clusters :")
     print(cluster_profile.to_string())
 
+    # Sauvegarde des modèles et des transformateurs nécessaires pour l'inférence
     save_artifacts(rf_pipeline, scaler, kmeans, kmeans_preprocessor)
 
     print("\n✅ Résumé :")
