@@ -219,12 +219,14 @@ def cross_validate_model(model: Pipeline, X: pd.DataFrame, y: pd.Series, cv: int
     return scores.mean(), scores.std(), scores.tolist()
 
 
-def train_kmeans(X: pd.DataFrame, n_clusters: int) -> tuple[KMeans, StandardScaler, np.ndarray]:
+def train_kmeans(X: pd.DataFrame, n_clusters: int) -> tuple[KMeans, StandardScaler, np.ndarray, ColumnTransformer]:
+    preprocessor = build_preprocessor()
+    X_transformed = preprocessor.fit_transform(X)
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    X_scaled = scaler.fit_transform(X_transformed)
     km = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
     km.fit(X_scaled)
-    return km, scaler, X_scaled
+    return km, scaler, X_scaled, preprocessor
 
 
 def plot_elbow(inertias: list[float], k_values: range, out_path: Path) -> None:
@@ -265,17 +267,20 @@ def plot_clusters(X_scaled: np.ndarray, labels: np.ndarray, n_clusters: int, out
     print(f"   ✅ Sauvegardé : {out_path}")
 
 
-def save_artifacts(model: Pipeline, scaler: StandardScaler, kmeans: KMeans) -> None:
+def save_artifacts(model: Pipeline, scaler: StandardScaler, kmeans: KMeans, kmeans_preprocessor: ColumnTransformer) -> None:
     with open(MODEL_DIR / "rf_pipeline.pkl", "wb") as f:
         pickle.dump(model, f)
     with open(MODEL_DIR / "kmeans_scaler.pkl", "wb") as f:
         pickle.dump(scaler, f)
     with open(MODEL_DIR / "kmeans_model.pkl", "wb") as f:
         pickle.dump(kmeans, f)
+    with open(MODEL_DIR / "kmeans_preprocessor.pkl", "wb") as f:
+        pickle.dump(kmeans_preprocessor, f)
     print("\n💾 Modèles sauvegardés :")
     print(f"   - {MODEL_DIR / 'rf_pipeline.pkl'}")
     print(f"   - {MODEL_DIR / 'kmeans_scaler.pkl'}")
     print(f"   - {MODEL_DIR / 'kmeans_model.pkl'}")
+    print(f"   - {MODEL_DIR / 'kmeans_preprocessor.pkl'}")
 
 
 def profile_clusters(df: pd.DataFrame, labels: np.ndarray) -> pd.DataFrame:
@@ -325,7 +330,7 @@ def main() -> None:
     print(f"Scores : {[f'{s*100:.1f}%' for s in cv_scores]}")
 
     print("\n🔵 Entraînement du clustering K-Means...")
-    kmeans, scaler, X_scaled = train_kmeans(X, n_clusters=args.clusters)
+    kmeans, scaler, X_scaled, kmeans_preprocessor = train_kmeans(X, n_clusters=args.clusters)
     print(f"Clusters entraînés : K = {args.clusters}")
 
     inertias = []
@@ -341,7 +346,7 @@ def main() -> None:
     print("\nProfil des clusters :")
     print(cluster_profile.to_string())
 
-    save_artifacts(rf_pipeline, scaler, kmeans)
+    save_artifacts(rf_pipeline, scaler, kmeans, kmeans_preprocessor)
 
     print("\n✅ Résumé :")
     print(f"   Random Forest accuracy test : {results['accuracy']*100:.1f}%")
@@ -352,190 +357,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-"""
-LIRE LA MATRICE DE CONFUSION :
-  Diagonale (de haut gauche à bas droite) = bonnes prédictions
-  Hors diagonale = erreurs
-  → Plus la diagonale est foncée, meilleur est le modèle
-"""
-
-# Importance des features
-feature_importance = pd.Series(
-    rf_model.feature_importances_, index=FEATURES
-).sort_values(ascending=True)
-
-colors = ["#e040fb" if i >= len(FEATURES) - 3 else "#3d2b6b"
-          for i in range(len(FEATURES))]
-axes[1].barh(feature_importance.index, feature_importance.values, color=colors)
-axes[1].set_title("Importance des variables\n(plus c'est grand = plus c'est important)", color="white")
-axes[1].set_xlabel("Importance (Gini)", color="white")
-for spine in axes[1].spines.values(): spine.set_color("#333")
-
-plt.tight_layout()
-plt.savefig("outputs/figures/ml_random_forest_eval.png", dpi=150,
-            bbox_inches="tight", facecolor="#0f0f13")
-plt.show()
-print("   ✅ Sauvegardé : outputs/figures/ml_random_forest_eval.png")
-
-
-# MODÈLE 2 — K-MEANS CLUSTERING
-print("\n" + "="*55)
-print("🔵 MODÈLE 2 — K-MEANS CLUSTERING")
-print("="*55)
-
-"""
-POURQUOI LE CLUSTERING ?
-═════════════════════════
-Le Random Forest = apprentissage supervisé (on connaît les étiquettes)
-Le K-Means       = apprentissage non supervisé (on cherche des groupes naturels)
-
-K-Means va trouver K groupes d'événements similaires.
-Peut révéler des patterns inconnus : par exemple une période de crise
-intense qu'on n'avait pas identifiée.
-
-COMMENT ÇA MARCHE :
-  1. Placer K points au hasard (les "centres")
-  2. Assigner chaque événement au centre le plus proche
-  3. Déplacer chaque centre vers la moyenne de son groupe
-  4. Répéter jusqu'à stabilité
-"""
-
-# Normaliser les données (K-Means sensible aux échelles)
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-
-# TROUVER LE BON NOMBRE DE CLUSTERS — méthode du coude
-print("\n🔍 Recherche du nombre optimal de clusters (méthode du coude)...")
-inertias = []
-K_range  = range(2, 9)
-
-for k in K_range:
-    km = KMeans(n_clusters=k, random_state=42, n_init=10)
-    km.fit(X_scaled)
-    inertias.append(km.inertia_)
-    print(f"   k={k} → inertie={km.inertia_:,.0f}")
-
-"""
-L'INERTIE = somme des distances de chaque point à son centre.
-Plus c'est petit = clusters plus compacts = mieux.
-On cherche le "coude" : l'endroit où l'inertie cesse de baisser fortement.
-"""
-
-fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(list(K_range), inertias, marker="o", color=ACCENT, linewidth=2.5, markersize=8)
-ax.set_xlabel("Nombre de clusters K", color="white")
-ax.set_ylabel("Inertie (plus bas = mieux)", color="white")
-ax.set_title("Méthode du coude — Choix du nombre de clusters optimal\n"
-             "(choisir là où la courbe 'se plie')", color="white", fontsize=12)
-ax.grid(alpha=0.2)
-for spine in ax.spines.values(): spine.set_color("#333")
-plt.tight_layout()
-plt.savefig("outputs/figures/ml_kmeans_elbow.png", dpi=150,
-            bbox_inches="tight", facecolor="#0f0f13")
-plt.show()
-
-# On choisit K=4 (souvent bon pour ce type de données)
-K_OPTIMAL = 4
-print(f"\n Choix retenu : K = {K_OPTIMAL} clusters")
-
-km_final = KMeans(n_clusters=K_OPTIMAL, random_state=42, n_init=10)
-df["cluster"] = km_final.fit_predict(X_scaled)
-
-# Profil de chaque cluster
-print("\n📊 Profil des clusters :")
-cluster_profile = df.groupby("cluster").agg(
-    nb_events    = ("cluster", "count"),
-    avg_tone     = ("AvgTone", "mean"),
-    avg_articles = ("NumArticles", "mean"),
-    avg_goldstein= ("GoldsteinScale", "mean"),
-    top_event    = ("event_category", lambda x: x.mode()[0]),
-    top_dept     = (dept_col, lambda x: x.mode()[0]),
-).round(2)
-print(cluster_profile.to_string())
-
-# Nommer les clusters manuellement selon leur profil
-cluster_names = {
-    0: "Événements diplomatiques calmes",
-    1: "Tensions sociales fortes",
-    2: "Couverture médiatique intense",
-    3: "Événements locaux mineurs",
-}
-df["cluster_name"] = df["cluster"].map(cluster_names)
-
-# Visualisation des clusters avec PCA (réduction à 2 dimensions)
-print("\n Visualisation des clusters (PCA 2D)...")
-
-"""
-PCA = Principal Component Analysis
-Notre espace de données est à 9 dimensions (9 features).
-On ne peut pas visualiser en 9D → on le réduit à 2D.
-PCA garde le maximum d'information en 2 dimensions.
-"""
-
-pca = PCA(n_components=2, random_state=42)
-X_pca = pca.fit_transform(X_scaled)
-print(f"   Variance expliquée par les 2 composantes : {pca.explained_variance_ratio_.sum()*100:.1f}%")
-
-fig, ax = plt.subplots(figsize=(12, 8))
-colors_cluster = ["#e040fb", "#00e5ff", "#4caf7d", "#ff9800"]
-
-for cluster_id in range(K_OPTIMAL):
-    mask = df["cluster"] == cluster_id
-    ax.scatter(
-        X_pca[mask, 0], X_pca[mask, 1],
-        c=colors_cluster[cluster_id],
-        label=f"Cluster {cluster_id}: {cluster_names.get(cluster_id, '')}",
-        alpha=0.5, s=15,
-    )
-
-ax.set_xlabel(f"Composante 1 ({pca.explained_variance_ratio_[0]*100:.1f}%)", color="white")
-ax.set_ylabel(f"Composante 2 ({pca.explained_variance_ratio_[1]*100:.1f}%)", color="white")
-ax.set_title("Clustering des événements GDELT au Bénin (K-Means + PCA)",
-             color="white", fontsize=13)
-ax.legend(facecolor="#1a1a2e", edgecolor="#333", fontsize=9)
-for spine in ax.spines.values(): spine.set_color("#333")
-plt.tight_layout()
-plt.savefig("outputs/figures/ml_kmeans_clusters.png", dpi=150,
-            bbox_inches="tight", facecolor="#0f0f13")
-plt.show()
-print("   ✅ Sauvegardé : outputs/figures/ml_kmeans_clusters.png")
-
-
-# SAUVEGARDE DES MODÈLES
-print("\n💾 Sauvegarde des modèles...")
-import pickle
-
-with open("outputs/models/random_forest_model.pkl", "wb") as f:
-    pickle.dump(rf_model, f)
-
-with open("outputs/models/kmeans_model.pkl", "wb") as f:
-    pickle.dump(km_final, f)
-
-with open("outputs/models/scaler.pkl", "wb") as f:
-    pickle.dump(scaler, f)
-
-print("   ✅ random_forest_model.pkl")
-print("   ✅ kmeans_model.pkl")
-print("   ✅ scaler.pkl")
-
-
-# RÉSUMÉ FINAL
-print("\n" + "="*55)
-print("✅ RÉSUMÉ DES MODÈLES ML")
-print("="*55)
-print(f"""
-  MODÈLE 1 — Random Forest (Classification)
-  ├─ Tâche      : Prédire le sentiment (Positif/Neutre/Négatif)
-  ├─ Accuracy   : {accuracy*100:.1f}% sur les données test
-  ├─ CV Score   : {cv_scores.mean()*100:.1f}% ± {cv_scores.std()*100:.1f}%
-  └─ Top feature: {feature_importance.index[-1]} ({feature_importance.values[-1]:.3f})
-
-  MODÈLE 2 — K-Means (Clustering)
-  ├─ Tâche      : Regrouper les événements similaires
-  ├─ Clusters   : {K_OPTIMAL} groupes identifiés
-  └─ Variance PCA expliquée : {pca.explained_variance_ratio_.sum()*100:.1f}%
-
-→ Ces résultats alimentent directement le notebook EDA
-  et le livrable "modèle ML" du hackathon !
-""")
