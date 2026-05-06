@@ -8,11 +8,12 @@ db-dtypes==1.2.0
 
 # Visualisation
 plotly==5.20.0
-streamlit==1.33.0
 folium==0.16.0
 streamlit-folium==0.20.0
 seaborn==0.13.2
 matplotlib==3.8.4
+streamlit>=1.30.0
+numpy>=1.24.0
 
 # NLP / ML
 transformers==4.40.0
