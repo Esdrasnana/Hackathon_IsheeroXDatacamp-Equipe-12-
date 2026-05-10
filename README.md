@@ -109,7 +109,7 @@ Un malus de 10 points est applique lorsque les deux dimensions divergent forteme
 |--------|------|---------------------------|
 | Yawo | Data Engineer | Pipeline de donnees, repo GitHub, reproductibilite |
 | Esdras | Data Analyst | Notebook d'exploration, visualisations, insights |
-| Roosvelt | Data Scientist | Modele ML, evaluation, interpretation |
+| Roosevelt | Data Scientist | Modele ML, evaluation, interpretation |
 | Lucia | ML Engineer | Dashboard Streamlit, deploiement, integration |
 
 ---
