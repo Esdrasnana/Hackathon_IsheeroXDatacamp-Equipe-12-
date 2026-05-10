@@ -60,11 +60,11 @@ st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-    #MainMenu {{ visibility: hidden; }}
-    header {{ visibility: hidden; }}
-    footer {{ visibility: hidden; }}
-    [data-testid="stHeader"] {{ display: none; }}
-    [data-testid="stToolbar"] {{ display: none; }}
+    # #MainMenu {{ visibility: hidden; }}
+    # header {{ visibility: hidden; }}
+    # footer {{ visibility: hidden; }}
+    # [data-testid="stHeader"] {{ display: none; }}
+    # [data-testid="stToolbar"] {{ display: none; }}
 
     .block-container {{ padding-top: 0.5rem; max-width: 1200px; }}
     html, body, [class*="css"] {{ font-family: 'Inter', sans-serif; }}
