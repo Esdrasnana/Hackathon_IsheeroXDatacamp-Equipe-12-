@@ -1,6 +1,6 @@
 """
 =============================================================================
-SENTINEL 360 . Dashboard  Benin 2025
+SENTINEL 360 . Dashboard GDELT Benin 2025
 =============================================================================
 Lancer :  streamlit run app.py
 =============================================================================
@@ -340,7 +340,7 @@ if page == "Signaux et stabilite":
     fig1.add_trace(go.Scatter(x=weekly["semaine"], y=weekly["volume_ma4"], name="Tendance (moy. mobile 4 sem.)", line=dict(color="#FFF", width=2, dash="dot"), mode="lines"))
     apply_style(fig1, 400)
     fig1.update_layout(yaxis_title="Nombre d'evenements")
-    st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(fig1, width='stretch')
 
     anomalies = weekly[weekly["alerte"].isin(["Alerte", "Vigilance"])].sort_values("z_score", ascending=False)
     if len(anomalies) > 0:
@@ -362,7 +362,7 @@ if page == "Signaux et stabilite":
                 steps=[dict(range=[0,30],color="#2a1215"),dict(range=[30,50],color="#2a2212"),dict(range=[50,70],color="#1a2a15"),dict(range=[70,100],color="#122a1a")],
                 threshold=dict(line=dict(color="#FFF",width=2),thickness=0.8,value=avg_stab))))
         fig_g.update_layout(height=260, margin=dict(l=30,r=30,t=30,b=10), paper_bgcolor="rgba(0,0,0,0)", font=dict(color="#666"))
-        st.plotly_chart(fig_g, use_container_width=True)
+        st.plotly_chart(fig_g, width='stretch')
 
     with ce:
         sec("Trajectoire mensuelle de l'indice", "La courbe bleue retrace l'evolution de l'indice Sentinel. Les barres rouges mesurent l'ecart entre la realite des evenements et leur traitement mediatique : plus elles sont hautes, plus la perception diverge de la realite.")
@@ -373,7 +373,7 @@ if page == "Signaux et stabilite":
         fig_e.add_hline(y=50, line_dash="dot", line_color="#444", annotation_text="Seuil de vigilance", annotation_font_color="#666")
         apply_style(fig_e, 280)
         fig_e.update_layout(yaxis=dict(title="Indice",range=[0,100]), yaxis2=dict(title="Ecart",overlaying="y",side="right",showgrid=False))
-        st.plotly_chart(fig_e, use_container_width=True)
+        st.plotly_chart(fig_e, width='stretch')
 
     if len(monthly) >= 2:
         f_s, l_s = monthly.iloc[0]["stability"], monthly.iloc[-1]["stability"]
@@ -390,7 +390,7 @@ if page == "Signaux et stabilite":
         fig_q = px.bar(mq, x="mois", y="count", color="quad_class_label", color_discrete_map=QUADCLASS_COLORS, labels={"count":"Evenements","mois":"","quad_class_label":""}, barmode="stack")
         apply_style(fig_q, 350)
         fig_q.update_layout(legend=dict(orientation="h",y=-0.18,title=""))
-        st.plotly_chart(fig_q, use_container_width=True)
+        st.plotly_chart(fig_q, width='stretch')
 
     with cp:
         sec("Repartition thematique", "Part relative de chaque pilier dans la couverture mediatique du Benin.")
@@ -398,7 +398,7 @@ if page == "Signaux et stabilite":
         fig_p = px.pie(pc, values="count", names="pilier", color="pilier", color_discrete_map=PILIER_COLORS, hole=0.45)
         apply_style(fig_p, 350)
         fig_p.update_layout(legend=dict(orientation="h",y=-0.1), margin=dict(l=20,r=20,t=20,b=20))
-        st.plotly_chart(fig_p, use_container_width=True)
+        st.plotly_chart(fig_p, width='stretch')
 
     st.markdown('<hr class="sep">', unsafe_allow_html=True)
 
@@ -409,7 +409,7 @@ if page == "Signaux et stabilite":
     fig_s = px.bar(ms, x="mois", y="pct", color="sentiment_proxy", color_discrete_map=SENTIMENT_COLORS, labels={"pct":"Part (%)","mois":"","sentiment_proxy":"Sentiment"}, barmode="stack")
     apply_style(fig_s, 320)
     fig_s.update_layout(legend=dict(orientation="h",y=-0.18,title=""))
-    st.plotly_chart(fig_s, use_container_width=True)
+    st.plotly_chart(fig_s, width='stretch')
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -428,7 +428,7 @@ elif page == "Dynamique d'influence":
         fig_a = px.bar(ta, x="N", y="Acteur", orientation="h", color_discrete_sequence=[ROYAL_LIGHT])
         apply_style(fig_a, 440)
         fig_a.update_layout(yaxis=dict(autorange="reversed",title=""), xaxis_title="Nombre d'evenements")
-        st.plotly_chart(fig_a, use_container_width=True)
+        st.plotly_chart(fig_a, width='stretch')
 
     with cr:
         sec("Matrice des interactions par type d'acteur", "Chaque bulle represente une interaction entre un type d'acteur initiateur (axe horizontal) et un type d'acteur cible (axe vertical). La taille reflete la frequence ; la couleur, le ton moyen de la relation.")
@@ -440,7 +440,7 @@ elif page == "Dynamique d'influence":
                 labels={"a1_label":"Initiateur","a2_label":"Cible","count":"Interactions","tone_moyen":"Ton"})
             apply_style(fig_c, 440)
             fig_c.update_layout(xaxis=dict(tickangle=-45), coloraxis_colorbar=dict(title="Ton",len=0.6))
-            st.plotly_chart(fig_c, use_container_width=True)
+            st.plotly_chart(fig_c, width='stretch')
         else:
             st.info("Les donnees disponibles ne permettent pas de construire cette matrice avec les filtres actuels.")
 
@@ -458,7 +458,7 @@ elif page == "Dynamique d'influence":
             hover_data={"tone_moyen":":.2f","pct_conflit":":.1f"}, labels={"interactions":"Nombre d'interactions","paire":""})
         apply_style(fig_pr, 460)
         fig_pr.update_layout(yaxis=dict(autorange="reversed"), legend=dict(title=""))
-        st.plotly_chart(fig_pr, use_container_width=True)
+        st.plotly_chart(fig_pr, width='stretch')
 
         tensest = pt[pt["nature"]=="Relation tendue"]
         if len(tensest) > 0:
@@ -475,7 +475,7 @@ elif page == "Dynamique d'influence":
     fig_f = px.bar(fg, x="Pays", y="Mentions", color_discrete_sequence=[GOLD])
     apply_style(fig_f, 300)
     fig_f.update_layout(xaxis_title="Code pays", yaxis_title="Nombre de mentions")
-    st.plotly_chart(fig_f, use_container_width=True)
+    st.plotly_chart(fig_f, width='stretch')
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -499,7 +499,7 @@ elif page == "Medias et geographie":
             fig_bi.add_hline(y=0, line_color="#333", line_dash="dot")
             apply_style(fig_bi, 340)
             fig_bi.update_layout(xaxis_title="", yaxis_title="Ton moyen")
-            st.plotly_chart(fig_bi, use_container_width=True)
+            st.plotly_chart(fig_bi, width='stretch')
             if len(bias) >= 2:
                 nat = bias[bias["source_type"].str.contains("national",case=False,na=False)]
                 intl = bias[~bias["source_type"].str.contains("national",case=False,na=False)]
@@ -521,7 +521,7 @@ elif page == "Medias et geographie":
             fig_lt.add_hline(y=0, line_color="#333", line_dash="dot")
             apply_style(fig_lt, 340)
             fig_lt.update_layout(xaxis_title="", yaxis_title="Ton moyen")
-            st.plotly_chart(fig_lt, use_container_width=True)
+            st.plotly_chart(fig_lt, width='stretch')
 
     sb = compute_source_bias(df)
     if len(sb) > 0:
@@ -530,7 +530,7 @@ elif page == "Medias et geographie":
         fig_sb = px.bar(sb, x="pilier", y="nb_events", color="source_type", barmode="group",
             color_discrete_sequence=[ROYAL_LIGHT, CORAL], labels={"nb_events":"Evenements","pilier":"","source_type":"Type de source"})
         apply_style(fig_sb, 300)
-        st.plotly_chart(fig_sb, use_container_width=True)
+        st.plotly_chart(fig_sb, width='stretch')
 
     st.markdown('<hr class="sep">', unsafe_allow_html=True)
 
@@ -546,7 +546,7 @@ elif page == "Medias et geographie":
                 zoom=5.5, center={"lat":9.3,"lon":2.3}, mapbox_style="carto-darkmatter", labels={"macro_zone":"Zone"}, category_orders={"macro_zone":ZONE_ORDER})
             fig_mp.update_traces(marker=dict(size=6,opacity=0.7))
             fig_mp.update_layout(height=480, margin=dict(l=0,r=0,t=0,b=0), legend=dict(orientation="h",y=-0.02,font=dict(size=10),bgcolor="rgba(0,0,0,0.5)"))
-            st.plotly_chart(fig_mp, use_container_width=True)
+            st.plotly_chart(fig_mp, width='stretch')
         else:
             st.warning("Aucun evenement geolocalise disponible avec les filtres actuels.")
 
@@ -577,7 +577,7 @@ elif page == "Medias et geographie":
     fig_ze.add_hline(y=0, line_dash="dot", line_color="#444")
     apply_style(fig_ze, 340)
     fig_ze.update_layout(legend=dict(orientation="h",y=-0.2,title=""))
-    st.plotly_chart(fig_ze, use_container_width=True)
+    st.plotly_chart(fig_ze, width='stretch')
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -608,7 +608,7 @@ elif page == "Fil d'alerte":
 
         # Afficher chaque alerte comme une fiche
         for i, row in alert_feed.iterrows():
-            # Determiner le style selon le niveau
+            # Pre-calculer toutes les valeurs
             if row["alerte"] == "Alerte":
                 border_color = C_NEG
                 badge_bg = "#2a1215"
@@ -625,40 +625,47 @@ elif page == "Fil d'alerte":
                 badge_color = ROYAL_LIGHT
                 badge_text = "SIGNAL"
 
-            # Ligne de detail pour la tension
             tension_text = "Dominante conflictuelle" if row["pct_conflit"] > 50 else ("Mixte" if row["pct_conflit"] > 30 else "Dominante cooperative")
             tension_color = C_NEG if row["pct_conflit"] > 50 else (C_NEU if row["pct_conflit"] > 30 else C_POS)
 
-            st.markdown(f'''
-            <div style="
-                background: {CARD_BG};
-                border: 1px solid {CARD_BORDER};
-                border-left: 4px solid {border_color};
-                border-radius: 0 8px 8px 0;
-                padding: 18px 22px;
-                margin-bottom: 12px;
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <div>
-                        <span style="font-size: 1.05rem; font-weight: 700; color: {TEXT_PRIMARY};">
-                            Semaine du {row["semaine"].strftime("%d/%m/%Y")}
-                        </span>
-                    </div>
-                    <div style="
-                        background: {badge_bg};
-                        border: 1px solid {border_color};
-                        border-radius: 4px;
-                        padding: 3px 10px;
-                        font-size: 0.65rem;
-                        font-weight: 700;
-                        color: {badge_color};
-                        letter-spacing: 0.08em;
-                    ">{badge_text}</div>
-                </div>
+            tone_val = row["tone_moyen"]
+            tone_color = C_NEG if tone_val < -2 else (C_POS if tone_val > 2 else C_NEU)
+            vol = row["volume"]
+            zscore = row["z_score"]
+            sem_date = row["semaine"].strftime("%d/%m/%Y")
+            evt_type = row["type_dominant"]
+            evt_actor = row["acteur_principal"]
+            evt_lieu = row["lieu_principal"]
+            evt_pilier = row["pilier"]
 
-                
-            </div>
-            ''', unsafe_allow_html=True)
+            card_html = (
+                '<div style="background:' + CARD_BG + ';border:1px solid ' + CARD_BORDER + ';border-left:4px solid ' + border_color + ';border-radius:0 8px 8px 0;padding:18px 22px;margin-bottom:12px;">'
+                + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+                + '<span style="font-size:1.05rem;font-weight:700;color:' + TEXT_PRIMARY + ';">Semaine du ' + sem_date + '</span>'
+                + '<div style="background:' + badge_bg + ';border:1px solid ' + border_color + ';border-radius:4px;padding:3px 10px;font-size:0.65rem;font-weight:700;color:' + badge_color + ';letter-spacing:0.08em;">' + badge_text + '</div>'
+                + '</div>'
+
+                + '<div style="display:flex;gap:24px;margin-bottom:12px;flex-wrap:wrap;">'
+                + '<div><div style="font-size:0.65rem;color:' + TEXT_SECONDARY + ';text-transform:uppercase;letter-spacing:0.05em;">Volume</div>'
+                + '<div style="font-family:JetBrains Mono,monospace;font-size:1.2rem;font-weight:700;color:' + TEXT_PRIMARY + ';">' + str(vol) + '</div></div>'
+                + '<div><div style="font-size:0.65rem;color:' + TEXT_SECONDARY + ';text-transform:uppercase;letter-spacing:0.05em;">Z-Score</div>'
+                + '<div style="font-family:JetBrains Mono,monospace;font-size:1.2rem;font-weight:700;color:' + border_color + ';">' + str(zscore) + '</div></div>'
+                + '<div><div style="font-size:0.65rem;color:' + TEXT_SECONDARY + ';text-transform:uppercase;letter-spacing:0.05em;">Ton moyen</div>'
+                + '<div style="font-family:JetBrains Mono,monospace;font-size:1.2rem;font-weight:700;color:' + tone_color + ';">' + str(tone_val) + '</div></div>'
+                + '<div><div style="font-size:0.65rem;color:' + TEXT_SECONDARY + ';text-transform:uppercase;letter-spacing:0.05em;">Nature</div>'
+                + '<div style="font-size:0.88rem;font-weight:600;color:' + tension_color + ';">' + tension_text + '</div></div>'
+                + '</div>'
+
+                + '<div style="background:#0E1117;border-radius:6px;padding:12px 16px;display:flex;gap:20px;flex-wrap:wrap;font-size:0.8rem;color:#B0B4BC;">'
+                + '<div><span style="color:' + TEXT_SECONDARY + ';">Type dominant :</span> <strong style="color:' + TEXT_PRIMARY + ';">' + str(evt_type) + '</strong></div>'
+                + '<div><span style="color:' + TEXT_SECONDARY + ';">Acteur principal :</span> <strong style="color:' + TEXT_PRIMARY + ';">' + str(evt_actor) + '</strong></div>'
+                + '<div><span style="color:' + TEXT_SECONDARY + ';">Lieu :</span> <strong style="color:' + TEXT_PRIMARY + ';">' + str(evt_lieu) + '</strong></div>'
+                + '<div><span style="color:' + TEXT_SECONDARY + ';">Pilier :</span> <strong style="color:' + TEXT_PRIMARY + ';">' + str(evt_pilier) + '</strong></div>'
+                + '</div>'
+                + '</div>'
+            )
+
+            st.markdown(card_html, unsafe_allow_html=True)
 
         st.markdown('<hr class="sep">', unsafe_allow_html=True)
 
@@ -693,7 +700,7 @@ elif page == "Fil d'alerte":
 
         st.dataframe(
             df_display.sort_values("Date", ascending=False) if "Date" in df_display.columns else df_display,
-            use_container_width=True,
+            width='stretch',
             height=450,
         )
 
@@ -718,4 +725,4 @@ elif page == "Fil d'alerte":
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 st.markdown('<div class="bottom-spacer"></div>', unsafe_allow_html=True)
-st.markdown('<div class="fixed-footer"><span>SENTINEL 360 . Hackathon Isheero x Benin 2025 . Donnees : GDELT Project</span></div>', unsafe_allow_html=True)
+st.markdown('<div class="fixed-footer"><span>SENTINEL 360 . Hackathon GDELT x Benin 2025 . Donnees : GDELT Project</span></div>', unsafe_allow_html=True)
