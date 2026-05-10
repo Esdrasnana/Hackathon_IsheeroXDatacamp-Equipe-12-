@@ -119,8 +119,8 @@ SELECT
 FROM `gdelt-bq.gdeltv2.events_partitioned`
 WHERE
     -- Filtre partitionné en premier (élagage physique, économise le quota)
-    _PARTITIONTIME >= '2025-01-01'
-    AND _PARTITIONTIME < '2025-12-31'
+    _PARTITIONTIME >= '2025-01-01 00:00:00'
+    AND _PARTITIONTIME < '2025-12-31 23:59:59'
     AND ActionGeo_CountryCode = 'BN'
     AND GoldsteinScale IS NOT NULL
     AND NumArticles > 0
