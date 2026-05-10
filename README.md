@@ -13,7 +13,7 @@ Projet realise dans le cadre du Hackathon GDELT x iSHEERO 2026.
 | Ressource | Lien |
 |-----------|------|
 | Dashboard en ligne | [https://dashboard-app-t2sakihhwibbvdhnqcuxdm.streamlit.app/](URL_A_COMPLETER) |
-| Video pitch| [https://drive.google.com/file/d/1bx4pED0DgksbccdgRGkDuLi8szOkruDB/view?usp=drivesdk](URL_A_COMPLETER) |
+| Video pitch| [https://drive.google.com/file/d/1cekbV58Ni7HljCS9Azk-f2syDAKUi263/view?usp=drivesdk](URL_A_COMPLETER) |
 
 ---
 
